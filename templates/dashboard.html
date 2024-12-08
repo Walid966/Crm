@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3>لوحة التحكم</h3>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('export_complaints') }}" class="btn btn-success">
+                    تصدير إلى Excel
+                </a>
+                <input type="text" class="form-control" id="searchInput" placeholder="بحث...">
+                <select class="form-select" id="statusFilter">
+                    <option value="">كل الحالات</option>
+                    <option value="pending">قيد الانتظار</option>
+                    <option value="in_progress">قيد المعالجة</option>
+                    <option value="completed">مكتملة</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>رقم الشكوى</th>
+                        <th>المندوب</th>
+                        <th>المشرف</th>
+                        <th>رقم حساب التاجر</th>
+                        <th>نوع الخدمة</th>
+                        <th>رقم العملية</th>
+                        <th>الحالة</th>
+                        <th>التاريخ</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints %}
+                    <tr>
+                        <td>{{ complaint.id }}</td>
+                        <td>
+                            {{ complaint.representative.name }}
+                            {% if complaint.representative.user %}
+                            <br><small class="text-muted">({{ complaint.representative.user.email }})</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ complaint.representative.supervisor.name }}
+                            {% if complaint.representative.supervisor.user %}
+                            <br><small class="text-muted">({{ complaint.representative.supervisor.user.email }})</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ complaint.merchant_account }}</td>
+                        <td>{{ complaint.service.service_type }}</td>
+                        <td>{{ complaint.transaction_number }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'warning' if complaint.status == 'pending' 
+                                else 'info' if complaint.status == 'in_progress' 
+                                else 'success' }}">
+                                {{ complaint.status }}
+                            </span>
+                        </td>
+                        <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" 
+                                        data-bs-target="#viewComplaintModal{{ complaint.id }}">
+                                    عرض
+                                </button>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" 
+                                        data-bs-target="#addResponseModal{{ complaint.id }}">
+                                    رد
+                                </button>
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    تغيير الحالة
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <form action="{{ url_for('update_complaint_status', complaint_id=complaint.id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="status" value="pending">
+                                            <button type="submit" class="dropdown-item">قيد الانتظار</button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form action="{{ url_for('update_complaint_status', complaint_id=complaint.id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="status" value="in_progress">
+                                            <button type="submit" class="dropdown-item">قيد المعالجة</button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form action="{{ url_for('update_complaint_status', complaint_id=complaint.id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="status" value="completed">
+                                            <button type="submit" class="dropdown-item">مكتملة</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% for complaint in complaints %}
+<!-- Modal عرض تفاصيل الشكوى -->
+<div class="modal fade" id="viewComplaintModal{{ complaint.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تفاصيل الشكوى #{{ complaint.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>المندوب:</strong> {{ complaint.representative.name }}
+                        {% if complaint.representative.user %}
+                        <br><small class="text-muted">البريد الإلكتروني: {{ complaint.representative.user.email }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>المشرف:</strong> {{ complaint.representative.supervisor.name }}
+                        {% if complaint.representative.supervisor.user %}
+                        <br><small class="text-muted">البريد الإلكتروني: {{ complaint.representative.supervisor.user.email }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>رقم حساب التاجر:</strong> {{ complaint.merchant_account }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>رقم العملية:</strong> {{ complaint.transaction_number }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>نوع الخدمة:</strong> {{ complaint.service.service_type }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>الخدمة الفرعية:</strong> {{ complaint.sub_service.name }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <strong>الملاحظات:</strong>
+                        <p>{{ complaint.notes }}</p>
+                    </div>
+                </div>
+                {% if complaint.image_path %}
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <strong>الصورة المرفقة:</strong>
+                        <img src="{{ url_for('static', filename='uploads/' + complaint.image_path) }}" 
+                             class="img-fluid mt-2" alt="صورة الشكوى">
+                    </div>
+                </div>
+                {% endif %}
+                <div class="row">
+                    <div class="col-12">
+                        <strong>الردود:</strong>
+                        {% for response in complaint.responses %}
+                        <div class="card mt-2">
+                            <div class="card-body">
+                                <p>{{ response.response_text }}</p>
+                                <small class="text-muted">
+                                    {{ response.user.username }} - 
+                                    {{ response.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة رد -->
+<div class="modal fade" id="addResponseModal{{ complaint.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة رد للشكوى #{{ complaint.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('add_response', complaint_id=complaint.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">الرد</label>
+                        <textarea class="form-control" name="response_text" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إرسال الرد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %} 

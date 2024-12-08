@@ -1,0 +1,321 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.card {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    border: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.navbar {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.alert {
+    border: none;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.complaint-card {
+    margin-bottom: 20px;
+    transition: transform 0.2s;
+}
+
+.complaint-card:hover {
+    transform: translateY(-2px);
+}
+
+.filter-section {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+} 
+
+/* إضافة أنماط للإشعارات */
+.toast {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 10px;
+    min-width: 300px;
+}
+
+.toast-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    padding: 0.5rem 0.75rem;
+}
+
+.toast-body {
+    padding: 0.75rem;
+}
+
+#notifications-badge {
+    font-size: 0.7rem;
+    padding: 0.25em 0.6em;
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+}
+
+/* تحسين مظهر الجداول */
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* تحسين مظهر البطاقات */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* تحسين مظهر الأزرار */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* تحسين مظهر النماذج */
+.form-control {
+    border-radius: 6px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* تحسين مظهر الفلاتر */
+.filter-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+/* تحسين مظهر الرسوم البيانية */
+canvas {
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* أنماط شريط التنقل */
+.nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    transition: all 0.2s;
+}
+
+.nav-tabs .nav-link:hover {
+    border: none;
+    color: #0d6efd;
+}
+
+.nav-tabs .nav-link.active {
+    border: none;
+    color: #0d6efd;
+    border-bottom: 2px solid #0d6efd;
+}
+
+/* أنماط الأزرار */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-group .btn {
+    border-radius: 6px;
+    margin: 0 2px;
+}
+
+/* أنماط حقول البحث */
+.form-control {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s;
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* أنماط القوائم */
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem;
+    transition: background-color 0.2s;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* أنماط النوافذ المنبثقة */
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: 2px solid #f0f0f0;
+    padding: 1.25rem;
+}
+
+.modal-footer {
+    border-top: 2px solid #f0f0f0;
+    padding: 1.25rem;
+}
+
+/* أنماط الأيقونات */
+.fas {
+    margin-right: 0.5rem;
+}
+
+/* أنماط التنبيهات */
+.alert {
+    border: none;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* أنماط البطاقات في صفحة إدارة البيانات */
+.supervisor-card .card-header,
+.service-card .card-header {
+    padding: 1rem;
+}
+
+.supervisor-card .card-body,
+.service-card .card-body {
+    padding: 1.25rem;
+}
+
+.supervisor-card .card-footer,
+.service-card .card-footer {
+    padding: 1rem;
+    background-color: #fff;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* أنماط العناوين */
+h5.mb-0 {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+/* أنماط النصوص الثانوية */
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* أنماط الأزرار الصغيرة */
+.btn-sm {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+}
+
+/* أنماط البحث */
+#supervisorSearch,
+#serviceSearch {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* تحسينات للتجاوب */
+@media (max-width: 768px) {
+    .col-md-4 {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-group {
+        display: flex;
+        margin-top: 0.5rem;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+    }
+}

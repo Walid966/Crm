@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">تقديم شكوى جديدة</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- المشرف والمندوب -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">المشرف</label>
+                            {{ form.supervisor_account(class="form-control", onchange="loadRepresentatives(this.value)") }}
+                            {% if form.supervisor_account.errors %}
+                                {% for error in form.supervisor_account.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">المندوب</label>
+                            {{ form.representative_account(class="form-control") }}
+                            {% if form.representative_account.errors %}
+                                {% for error in form.representative_account.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- رقم حساب التاجر ورقم العملية -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">رقم حساب التاجر</label>
+                            {{ form.merchant_account(class="form-control", placeholder="أدخل رقم حساب التاجر") }}
+                            {% if form.merchant_account.errors %}
+                                {% for error in form.merchant_account.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">رقم العملية</label>
+                            {{ form.transaction_number(class="form-control", placeholder="أدخل رقم العملية") }}
+                            {% if form.transaction_number.errors %}
+                                {% for error in form.transaction_number.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- نوع الخدمة والخدمة الفرعية -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">نوع الخدمة</label>
+                            {{ form.service_type(class="form-control", onchange="loadSubServices(this.value)") }}
+                            {% if form.service_type.errors %}
+                                {% for error in form.service_type.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الخدمة الفرعية</label>
+                            {{ form.sub_service(class="form-control") }}
+                            {% if form.sub_service.errors %}
+                                {% for error in form.sub_service.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- الملاحظات -->
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        {{ form.notes(class="form-control", rows="4", placeholder="أدخل أي ملاحظات إضافية") }}
+                        {% if form.notes.errors %}
+                            {% for error in form.notes.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- صورة الشكوى -->
+                    <div class="mb-3">
+                        <label class="form-label">صورة الشكوى (اختياري)</label>
+                        {{ form.image(class="form-control") }}
+                        {% if form.image.errors %}
+                            {% for error in form.image.errors %}
+                                <div class="text-danger">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <small class="text-muted">الصيغ المدعومة: PNG, JPG, JPEG, GIF, PDF</small>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">إرسال الشكوى</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function loadRepresentatives(supervisorId) {
+    if (!supervisorId) return;
+    
+    fetch(`/get_representatives/${supervisorId}`)
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('representative_account');
+            select.innerHTML = '<option value="">اختر المندوب</option>';
+            data.forEach(rep => {
+                const option = document.createElement('option');
+                option.value = rep.id;
+                option.textContent = rep.name;
+                select.appendChild(option);
+            });
+        });
+}
+
+function loadSubServices(serviceId) {
+    if (!serviceId) return;
+    
+    fetch(`/get_sub_services/${serviceId}`)
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('sub_service');
+            select.innerHTML = '<option value="">اختر الخدمة الفرعية</option>';
+            data.forEach(sub => {
+                const option = document.createElement('option');
+                option.value = sub.id;
+                option.textContent = sub.name;
+                select.appendChild(option);
+            });
+        });
+}
+
+// تحميل المناديب والخدمات الفرعية عند تحميل الصفحة إذا كان هناك قيم محددة مسبقاً
+document.addEventListener('DOMContentLoaded', function() {
+    const supervisorSelect = document.getElementById('supervisor_account');
+    const serviceSelect = document.getElementById('service_type');
+    
+    if (supervisorSelect.value) {
+        loadRepresentatives(supervisorSelect.value);
+    }
+    
+    if (serviceSelect.value) {
+        loadSubServices(serviceSelect.value);
+    }
+});
+</script>
+{% endblock %} 

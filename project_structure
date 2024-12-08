@@ -1,0 +1,12 @@
+complaint_system/
+├── static/
+│   ├── css/
+│   ├── js/
+│   └── uploads/
+├── templates/
+├── instance/
+├── app.py
+├── models.py
+├── forms.py
+├── config.py
+└── requirements.txt 

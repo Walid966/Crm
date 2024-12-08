@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- إحصائيات عامة -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h4>إحصائيات عامة</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h5>إجمالي المشرفين</h5>
+                            <h2>{{ supervisors_count }}</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h5>إجمالي المناديب</h5>
+                            <h2>{{ representatives_count }}</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h5>إجمالي الخدمات</h5>
+                            <h2>{{ services_count }}</h2>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h5>إجمالي المستخدمين</h5>
+                            <h2>{{ users_count }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات الشكاوى -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>إحصائيات الشكاوى حسب الحالة</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات الخدمات -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>إحصائيات الشكاوى حسب الخدمة</h4>
+            </div>
+            <div class="card-body">
+                <canvas id="serviceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- تقرير تفصيلي -->
+    <div class="col-md-12 mt-4">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4>تقرير تفصيلي</h4>
+                    <div>
+                        <input type="date" id="dateFrom" class="form-control d-inline-block w-auto">
+                        <input type="date" id="dateTo" class="form-control d-inline-block w-auto">
+                        <button class="btn btn-primary" onclick="filterReport()">تصفية</button>
+                        <button class="btn btn-success" onclick="exportReport()">تصدير</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table" id="reportTable">
+                        <thead>
+                            <tr>
+                                <th>المشرف</th>
+                                <th>عدد الشكاوى</th>
+                                <th>قيد الانتظار</th>
+                                <th>قيد المعالجة</th>
+                                <th>مكتملة</th>
+                                <th>نسبة الإنجاز</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in supervisor_stats %}
+                            <tr>
+                                <td>{{ stat.supervisor_name }}</td>
+                                <td>{{ stat.total_complaints }}</td>
+                                <td>{{ stat.pending_complaints }}</td>
+                                <td>{{ stat.in_progress_complaints }}</td>
+                                <td>{{ stat.completed_complaints }}</td>
+                                <td>{{ "%.2f"|format(stat.completion_rate) }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // رسم بياني للحالات
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'pie',
+        data: {
+            labels: ['قيد الانتظار', 'قيد المعالجة', 'مكتملة'],
+            datasets: [{
+                data: [
+                    {{ status_stats.pending }},
+                    {{ status_stats.in_progress }},
+                    {{ status_stats.completed }}
+                ],
+                backgroundColor: [
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(75, 192, 192, 0.5)'
+                ]
+            }]
+        }
+    });
+
+    // رسم بياني للخدمات
+    const serviceCtx = document.getElementById('serviceChart').getContext('2d');
+    new Chart(serviceCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ service_labels|tojson }},
+            datasets: [{
+                label: 'عدد الشكاوى',
+                data: {{ service_data }},
+                backgroundColor: 'rgba(54, 162, 235, 0.5)'
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+
+function filterReport() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    window.location.href = `/advanced_statistics?from=${dateFrom}&to=${dateTo}`;
+}
+
+function exportReport() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    window.location.href = `/export_advanced_report?from=${dateFrom}&to=${dateTo}`;
+}
+</script>
+{% endblock %} 

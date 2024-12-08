@@ -1,0 +1,163 @@
+<!-- إضافة مشرف جديد -->
+<div class="modal fade" id="addSupervisorModal" tabindex="-1" aria-labelledby="addSupervisorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSupervisorModalLabel">إضافة مشرف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('add_supervisor') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="account_number" class="form-label">رقم الحساب</label>
+                        <input type="text" class="form-control" id="account_number" name="account_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">الاسم</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div id="representatives">
+                        <h6>المناديب</h6>
+                        <div class="representative-entry mb-3">
+                            <div class="row">
+                                <div class="col">
+                                    <input type="text" class="form-control" name="rep_account_numbers[]" placeholder="رقم حساب المندوب">
+                                </div>
+                                <div class="col">
+                                    <input type="text" class="form-control" name="rep_names[]" placeholder="اسم المندوب">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="addRepresentativeField()">إضافة مندوب</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- تعديل مشرف -->
+{% for supervisor in supervisors %}
+<div class="modal fade" id="editSupervisorModal{{ supervisor.id }}" tabindex="-1" 
+     aria-labelledby="editSupervisorModalLabel{{ supervisor.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editSupervisorModalLabel{{ supervisor.id }}">تعديل المشرف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('edit_supervisor', supervisor_id=supervisor.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="account_number{{ supervisor.id }}" class="form-label">رقم الحساب</label>
+                        <input type="text" class="form-control" id="account_number{{ supervisor.id }}" 
+                               name="account_number" value="{{ supervisor.account_number }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name{{ supervisor.id }}" class="form-label">الاسم</label>
+                        <input type="text" class="form-control" id="name{{ supervisor.id }}" 
+                               name="name" value="{{ supervisor.name }}" required>
+                    </div>
+                    <div id="existingRepresentatives{{ supervisor.id }}">
+                        <h6>المناديب الحاليين</h6>
+                        {% for rep in supervisor.representatives %}
+                        <div class="mb-2">
+                            {{ rep.name }} ({{ rep.account_number }})
+                            <button type="button" class="btn btn-sm btn-danger" 
+                                    onclick="deleteRepresentative({{ rep.id }})">حذف</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div id="newRepresentatives{{ supervisor.id }}">
+                        <h6>إضافة مناديب جدد</h6>
+                        <div class="representative-entry mb-3">
+                            <div class="row">
+                                <div class="col">
+                                    <input type="text" class="form-control" name="new_rep_account_numbers[]" 
+                                           placeholder="رقم حساب المندوب">
+                                </div>
+                                <div class="col">
+                                    <input type="text" class="form-control" name="new_rep_names[]" 
+                                           placeholder="اسم المندوب">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary" 
+                            onclick="addNewRepresentativeField({{ supervisor.id }})">إضافة مندوب جديد</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                    <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+function addRepresentativeField() {
+    const container = document.getElementById('representatives');
+    const newEntry = document.createElement('div');
+    newEntry.className = 'representative-entry mb-3';
+    newEntry.innerHTML = `
+        <div class="row">
+            <div class="col">
+                <input type="text" class="form-control" name="rep_account_numbers[]" placeholder="رقم حساب المندوب">
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" name="rep_names[]" placeholder="اسم المندوب">
+            </div>
+        </div>
+    `;
+    container.appendChild(newEntry);
+}
+
+function addNewRepresentativeField(supervisorId) {
+    const container = document.getElementById(`newRepresentatives${supervisorId}`);
+    const newEntry = document.createElement('div');
+    newEntry.className = 'representative-entry mb-3';
+    newEntry.innerHTML = `
+        <div class="row">
+            <div class="col">
+                <input type="text" class="form-control" name="new_rep_account_numbers[]" placeholder="رقم حساب المندوب">
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" name="new_rep_names[]" placeholder="اسم المندوب">
+            </div>
+        </div>
+    `;
+    container.appendChild(newEntry);
+}
+
+function deleteRepresentative(repId) {
+    if (confirm('هل أنت متأكد من حذف هذا المندوب؟')) {
+        fetch(`/delete_representative/${repId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء حذف المندوب');
+        });
+    }
+}
+</script> 

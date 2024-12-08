@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">إدارة البيانات</h2>
+    
+    <!-- نظام التبويبات -->
+    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="supervisors-tab" data-bs-toggle="tab" 
+                    data-bs-target="#supervisors" type="button" role="tab">المشرفين</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="services-tab" data-bs-toggle="tab" 
+                    data-bs-target="#services" type="button" role="tab">الخدمات</button>
+        </li>
+    </ul>
+
+    <!-- محتوى التبويبات -->
+    <div class="tab-content" id="myTabContent">
+        <!-- تبويب المشرفين -->
+        <div class="tab-pane fade show active" id="supervisors" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>المشرفين</h3>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSupervisorModal">
+                        إضافة مشرف
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>رقم الحساب</th>
+                                    <th>الاسم</th>
+                                    <th>المناديب</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for supervisor in supervisors %}
+                                <tr>
+                                    <td>{{ supervisor.account_number }}</td>
+                                    <td>{{ supervisor.name }}</td>
+                                    <td>
+                                        <ul>
+                                            {% for rep in supervisor.representatives %}
+                                            <li>{{ rep.name }} ({{ rep.account_number }})</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-warning" data-bs-toggle="modal" 
+                                                data-bs-target="#editSupervisorModal{{ supervisor.id }}">
+                                            تعديل
+                                        </button>
+                                        <form action="{{ url_for('delete_supervisor', supervisor_id=supervisor.id) }}" 
+                                              method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-danger" 
+                                                    onclick="return confirm('هل أنت متأكد من حذف هذا المشرف؟')">
+                                                حذف
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- تبويب الخدمات -->
+        <div class="tab-pane fade" id="services" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3>الخدمات</h3>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                        إضافة خدمة
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>نوع الخدمة</th>
+                                    <th>الخدمات الفرعية</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for service in services %}
+                                <tr>
+                                    <td>{{ service.service_type }}</td>
+                                    <td>
+                                        <ul>
+                                            {% for sub in service.sub_services %}
+                                            <li>{{ sub.name }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-warning" data-bs-toggle="modal" 
+                                                data-bs-target="#editServiceModal{{ service.id }}">
+                                            تعديل
+                                        </button>
+                                        <form action="{{ url_for('delete_service', service_id=service.id) }}" 
+                                              method="POST" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-danger" 
+                                                    onclick="return confirm('هل أنت متأكد من حذف هذه الخدمة؟')">
+                                                حذف
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'modals/supervisor_modals.html' %}
+{% include 'modals/service_modals.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// حفظ التبويب النشط في التخزين المحلي
+document.addEventListener('DOMContentLoaded', function() {
+    // استرجاع التبويب المحفوظ
+    const activeTab = localStorage.getItem('activeManageDataTab');
+    if (activeTab) {
+        const tab = new bootstrap.Tab(document.querySelector(activeTab));
+        tab.show();
+    }
+
+    // حفظ التبويب عند التغيير
+    const tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabElements.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function (event) {
+            localStorage.setItem('activeManageDataTab', `#${event.target.id}`);
+        });
+    });
+});
+</script>
+{% endblock %} 

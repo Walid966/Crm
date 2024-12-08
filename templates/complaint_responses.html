@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>متابعة الشكاوى</h3>
+            <div class="filter-section d-flex gap-2">
+                <input type="text" class="form-control" id="searchInput" placeholder="بحث عام...">
+                <select class="form-select" id="statusFilter">
+                    <option value="">كل الحالات</option>
+                    <option value="pending">قيد الانتظار</option>
+                    <option value="in_progress">قيد المعالجة</option>
+                    <option value="completed">مكتملة</option>
+                </select>
+                <select class="form-select" id="dateFilter">
+                    <option value="">كل التواريخ</option>
+                    <option value="today">اليوم</option>
+                    <option value="week">هذا الأسبوع</option>
+                    <option value="month">هذا الشهر</option>
+                </select>
+                <button class="btn btn-secondary" id="resetFilters">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <a href="{{ url_for('export_complaints') }}" class="btn btn-success">
+                    <i class="fas fa-file-excel"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="complaintsContainer">
+            {% for complaint in complaints %}
+            <div class="complaint-card card mb-3" 
+                 data-merchant="{{ complaint.merchant_account }}"
+                 data-service="{{ complaint.service.service_type }}"
+                 data-status="{{ complaint.status }}"
+                 data-date="{{ complaint.created_at.strftime('%Y-%m-%d') }}"
+                 data-representative="{{ complaint.representative.name }}">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5>شكوى #{{ complaint.id }}</h5>
+                        <div>
+                            <span class="badge bg-{{ 'warning' if complaint.status == 'pending' 
+                                else 'info' if complaint.status == 'in_progress' 
+                                else 'success' }}">
+                                {{ complaint.status }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <strong>رقم حساب التاجر:</strong> {{ complaint.merchant_account }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>نوع الخدمة:</strong> {{ complaint.service.service_type }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>رقم العملية:</strong> {{ complaint.transaction_number }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>المندوب:</strong> {{ complaint.representative.name }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>الملاحظات:</strong>
+                        <p>{{ complaint.notes }}</p>
+                    </div>
+                    {% if complaint.responses %}
+                    <div class="responses mt-3">
+                        <h6>الردود:</h6>
+                        {% for response in complaint.responses|sort(attribute='created_at', reverse=true) %}
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <p>{{ response.response_text }}</p>
+                                <small class="text-muted">
+                                    {{ response.user.username }} - 
+                                    {{ response.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if current_user.role in ['admin', 'support'] %}
+                    <div class="mt-3">
+                        <button class="btn btn-primary" data-bs-toggle="modal" 
+                                data-bs-target="#addResponseModal{{ complaint.id }}">
+                            إضافة رد
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div id="noResults" class="text-center mt-4" style="display: none;">
+            <p class="text-muted">لا توجد نتائج تطابق معايير البحث</p>
+        </div>
+    </div>
+</div>
+
+{% for complaint in complaints %}
+<!-- Modal إضافة رد -->
+<div class="modal fade" id="addResponseModal{{ complaint.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة رد للشكوى #{{ complaint.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('add_response', complaint_id=complaint.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">الرد</label>
+                        <textarea class="form-control" name="response_text" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">تحديث الحالة</label>
+                        <select name="status" class="form-select">
+                            <option value="pending" {% if complaint.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                            <option value="in_progress" {% if complaint.status == 'in_progress' %}selected{% endif %}>قيد المعالجة</option>
+                            <option value="completed" {% if complaint.status == 'completed' %}selected{% endif %}>مكتملة</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إرسال الرد وتحديث الحالة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const dateFilter = document.getElementById('dateFilter');
+    const resetButton = document.getElementById('resetFilters');
+    const complaintsContainer = document.getElementById('complaintsContainer');
+    const noResults = document.getElementById('noResults');
+    let complaints = document.querySelectorAll('.complaint-card');
+    let debounceTimeout;
+
+    function filterComplaints() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusTerm = statusFilter.value;
+        const dateTerm = dateFilter.value;
+        let hasResults = false;
+
+        complaints.forEach(complaint => {
+            let showComplaint = true;
+
+            // فلترة البحث العام
+            if (searchTerm) {
+                const searchableContent = [
+                    complaint.dataset.merchant,
+                    complaint.dataset.service,
+                    complaint.dataset.representative,
+                    complaint.textContent
+                ].join(' ').toLowerCase();
+                
+                if (!searchableContent.includes(searchTerm)) {
+                    showComplaint = false;
+                }
+            }
+
+            // فلترة الحالة
+            if (statusTerm && complaint.dataset.status !== statusTerm) {
+                showComplaint = false;
+            }
+
+            // فلترة التاريخ
+            if (dateTerm) {
+                const complaintDate = new Date(complaint.dataset.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                switch(dateTerm) {
+                    case 'today':
+                        if (complaintDate < today) {
+                            showComplaint = false;
+                        }
+                        break;
+                    case 'week':
+                        const weekAgo = new Date(today);
+                        weekAgo.setDate(today.getDate() - 7);
+                        if (complaintDate < weekAgo) {
+                            showComplaint = false;
+                        }
+                        break;
+                    case 'month':
+                        const monthAgo = new Date(today);
+                        monthAgo.setMonth(today.getMonth() - 1);
+                        if (complaintDate < monthAgo) {
+                            showComplaint = false;
+                        }
+                        break;
+                }
+            }
+
+            complaint.style.display = showComplaint ? 'block' : 'none';
+            if (showComplaint) hasResults = true;
+        });
+
+        noResults.style.display = hasResults ? 'none' : 'block';
+    }
+
+    function debounceFilter() {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(filterComplaints, 300);
+    }
+
+    // إضافة مستمعي الأحداث
+    searchInput.addEventListener('input', debounceFilter);
+    statusFilter.addEventListener('change', filterComplaints);
+    dateFilter.addEventListener('change', filterComplaints);
+    
+    // إعادة تعيين الفلاتر
+    resetButton.addEventListener('click', function() {
+        searchInput.value = '';
+        statusFilter.value = '';
+        dateFilter.value = '';
+        filterComplaints();
+    });
+
+    // تحديث القائمة عند استلام شكوى جديدة
+    socket.on('new_complaint', function(data) {
+        // إعادة تحميل الصفحة للحصول على البيانات المحدثة
+        location.reload();
+    });
+});
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+.filter-section .btn {
+    padding: 0.375rem 0.75rem;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-section .form-control,
+.filter-section .form-select {
+    height: 38px;
+}
+
+.filter-section .btn i {
+    font-size: 1rem;
+}
+</style>
+{% endblock %} 
