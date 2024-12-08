@@ -329,7 +329,7 @@ def complaint_responses():
         return render_template('complaint_responses.html', complaints=complaints)
     except Exception as e:
         print(f"حدث خطأ: {str(e)}")
-        flash('حدث خطأ أثناء تحميل الشكاوى', 'error')
+        flash('حدث خطأ أثناء تح��يل الشكاوى', 'error')
         return render_template('complaint_responses.html', complaints=[])
 
 @app.route('/add_response/<int:complaint_id>', methods=['POST'])
@@ -881,7 +881,7 @@ def advanced_statistics():
     service_data = [Complaint.query.filter_by(service_id=service.id).count() 
                    for service in services]
     
-    # إحصائيات المشرفين
+    # إح��ائيات المشرفين
     supervisor_stats = []
     for supervisor in Supervisor.query.all():
         complaints = Complaint.query.join(Representative)\
@@ -930,7 +930,7 @@ def export_advanced_report():
               'مكتملة', 'نسبة الإنجاز']
     ws.append(headers)
     
-    # إ��افة البيانات
+    # إضافة البيانات
     for supervisor in Supervisor.query.all():
         complaints = Complaint.query.join(Representative)\
             .filter(Representative.supervisor_id == supervisor.id).all()
@@ -1037,7 +1037,7 @@ def change_user_password(user_id):
     
     return redirect(url_for('manage_users'))
 
-# إضافة معالجة الخطأ في حالة فشل تحميل الملف
+# إضافة معالجة الخطأ في حالة فشل تحمي�� الملف
 def save_uploaded_file(file):
     try:
         if file and allowed_file(file.filename):
@@ -1059,8 +1059,12 @@ if __name__ == '__main__':
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
     
+    # تحديد المنفذ من متغيرات البيئة أو استخدام 5050 كقيمة افتراضية
     port = int(os.environ.get('PORT', 5050))
-    socketio.run(app, 
-                host='0.0.0.0',
-                port=port,
-                debug=False) 
+    if os.environ.get('VERCEL_ENV') == 'production':
+        app.run()
+    else:
+        socketio.run(app, 
+                    host='0.0.0.0',
+                    port=port,
+                    debug=False) 
