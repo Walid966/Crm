@@ -437,40 +437,56 @@ def delete_response(id):
     flash('تم حذف الرد بنجاح', 'success')
     return jsonify({'success': True})
 
-@bp.route('/download')
+@bp.route('/download', methods=['GET', 'POST'])
 @login_required
 def download_complaints():
     """تنزيل الشكاوى المعروضة في شكل Excel"""
     try:
         # الاستعلام الأساسي
-        query = Complaint.query.join(Complaint.user)
+        query = Complaint.query.join(Complaint.user).join(Complaint.service).join(Complaint.sub_service)
         
         # تصفية حسب دور المستخدم
         if current_user.role == 'sales':
-            query = query.filter_by(user_id=current_user.id)
+            query = query.filter(Complaint.user_id == current_user.id)
         
-        # تطبيق معايير البحث من الـ query parameters
-        if request.args.get('supervisor_account'):
-            query = query.filter(User.supervisor_account == request.args.get('supervisor_account'))
-        if request.args.get('user_account'):
-            query = query.filter(User.account_number == request.args.get('user_account'))
-        if request.args.get('merchant_account'):
-            query = query.filter(Complaint.merchant_account.ilike(f'%{request.args.get("merchant_account")}%'))
-        if request.args.get('transaction_number'):
-            query = query.filter(Complaint.transaction_number.ilike(f'%{request.args.get("transaction_number")}%'))
-        if request.args.get('service') and request.args.get('service') != '0':
-            query = query.filter_by(service_id=request.args.get('service'))
-        if request.args.get('sub_service') and request.args.get('sub_service') != '0':
-            query = query.filter_by(sub_service_id=request.args.get('sub_service'))
-        if request.args.get('status'):
-            query = query.filter_by(status=request.args.get('status'))
-        if request.args.get('date_from'):
-            query = query.filter(Complaint.created_at >= datetime.strptime(request.args.get('date_from'), '%Y-%m-%d'))
-        if request.args.get('date_to'):
-            query = query.filter(Complaint.created_at <= datetime.strptime(request.args.get('date_to'), '%Y-%m-%d'))
+        # تطبيق معايير البحث من النموذج أو الـ query parameters
+        if request.method == 'POST':
+            form_data = request.get_json()
+        else:
+            form_data = request.args
+        
+        current_app.logger.debug(f'بيانات البحث المستلمة: {form_data}')
+        
+        if form_data:
+            if form_data.get('supervisor_account'):
+                query = query.filter(User.supervisor_account == form_data.get('supervisor_account'))
+            if form_data.get('user_account'):
+                query = query.filter(User.account_number == form_data.get('user_account'))
+            if form_data.get('merchant_account'):
+                query = query.filter(Complaint.merchant_account.ilike(f'%{form_data.get("merchant_account")}%'))
+            if form_data.get('transaction_number'):
+                query = query.filter(Complaint.transaction_number.ilike(f'%{form_data.get("transaction_number")}%'))
+            if form_data.get('service') and str(form_data.get('service')) != '0':
+                query = query.filter(Complaint.service_id == int(form_data.get('service')))
+            if form_data.get('sub_service') and str(form_data.get('sub_service')) != '0':
+                query = query.filter(Complaint.sub_service_id == int(form_data.get('sub_service')))
+            if form_data.get('status'):
+                query = query.filter(Complaint.status == form_data.get('status'))
+            if form_data.get('date_from'):
+                date_from = datetime.strptime(form_data.get('date_from'), '%Y-%m-%d')
+                query = query.filter(Complaint.created_at >= date_from)
+            if form_data.get('date_to'):
+                date_to = datetime.strptime(form_data.get('date_to'), '%Y-%m-%d')
+                query = query.filter(Complaint.created_at <= date_to)
         
         # تنفيذ الاستعلام
         complaints = query.order_by(Complaint.created_at.desc()).all()
+        
+        current_app.logger.debug(f'تم العثور على {len(complaints)} شكوى للتصدير')
+        
+        if not complaints:
+            flash('لا توجد شكاوى للتصدير', 'warning')
+            return redirect(url_for('complaints.index'))
         
         # إنشاء ملف Excel في الذاكرة
         output = io.BytesIO()
@@ -510,12 +526,18 @@ def download_complaints():
             'الخدمة',
             'الخدمة الفرعية',
             'الحالة',
-            'تاريخ الإنشاء'
+            'تاريخ الإنشاء',
+            'الملاحظات'
         ]
         
+        # تعيين عرض الأعمدة
+        column_widths = [10, 15, 20, 15, 20, 15, 15, 20, 20, 15, 20, 40]
+        for col, width in enumerate(column_widths):
+            worksheet.set_column(col, col, width)
+        
+        # كتابة العناوين
         for col, header in enumerate(headers):
             worksheet.write(0, col, header, header_format)
-            worksheet.set_column(col, col, 15)  # تعيين عرض العمود
         
         # كتابة البيانات
         status_labels = {
@@ -537,7 +559,8 @@ def download_complaints():
                 complaint.service.name,
                 complaint.sub_service.name,
                 status_labels.get(complaint.status, complaint.status),
-                complaint.created_at.strftime('%Y-%m-%d %H:%M')
+                complaint.created_at.strftime('%Y-%m-%d %H:%M'),
+                complaint.notes
             ]
             for col, value in enumerate(data):
                 worksheet.write(row, col, value, data_format)

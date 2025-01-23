@@ -180,17 +180,44 @@ function exportComplaints() {
     const form = document.getElementById('searchForm');
     const formData = new FormData(form);
     
-    // تحويل بيانات النموذج إلى معلمات URL
-    const params = new URLSearchParams();
+    // تحويل بيانات النموذج إلى كائن
+    const data = {};
     for (const [key, value] of formData.entries()) {
         if (value) {
-            params.append(key, value);
+            data[key] = value;
         }
     }
     
-    // إنشاء رابط التصدير مع معلمات البحث
-    const exportUrl = `/complaints/download?${params.toString()}`;
-    window.location.href = exportUrl;
+    // إرسال طلب POST إلى نقطة النهاية
+    fetch('/complaints/download', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': formData.get('csrf_token')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.blob();
+        }
+        throw new Error('فشل في تحميل الملف');
+    })
+    .then(blob => {
+        // إنشاء رابط تحميل مؤقت
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `complaints_${new Date().toISOString().slice(0,10)}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء تصدير البيانات');
+    });
 }
 </script>
 {% endblock %} 
