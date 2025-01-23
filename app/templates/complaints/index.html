@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}الشكاوى{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>الشكاوى</h2>
+        {% if current_user.role == 'sales' %}
+        <a href="{{ url_for('complaints.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> شكوى جديدة
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- نموذج البحث المتقدم -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">البحث المتقدم</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" id="searchForm">
+                {{ form.csrf_token }}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.supervisor_account.label(class="form-label") }}
+                        {{ form.supervisor_account(class="form-control", placeholder="أدخل رقم حساب المشرف") }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.user_account.label(class="form-label") }}
+                        {{ form.user_account(class="form-control", placeholder="أدخل رقم حساب المستخدم") }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.merchant_account.label(class="form-label") }}
+                        {{ form.merchant_account(class="form-control", placeholder="أدخل رقم حساب التاجر") }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.transaction_number.label(class="form-label") }}
+                        {{ form.transaction_number(class="form-control", placeholder="أدخل رقم العملية") }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.service.label(class="form-label") }}
+                        {{ form.service(class="form-select") }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.sub_service.label(class="form-label") }}
+                        {{ form.sub_service(class="form-select") }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        {{ form.status.label(class="form-label") }}
+                        {{ form.status(class="form-select") }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form.date_from.label(class="form-label") }}
+                        {{ form.date_from(class="form-control", type="date") }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form.date_to.label(class="form-label") }}
+                        {{ form.date_to(class="form-control", type="date") }}
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button type="button" onclick="exportComplaints()" class="btn btn-success me-2">
+                        <i class="fas fa-file-excel"></i> تصدير النتائج
+                    </button>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- جدول الشكاوى -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>رقم الشكوى</th>
+                    <th>رقم حساب المستخدم</th>
+                    <th>اسم المستخدم</th>
+                    <th>رقم حساب المشرف</th>
+                    <th>اسم المشرف</th>
+                    <th>التاجر</th>
+                    <th>رقم العملية</th>
+                    <th>الخدمة</th>
+                    <th>الخدمة الفرعية</th>
+                    <th>الحالة</th>
+                    <th>تاريخ الإنشاء</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in complaints.items %}
+                <tr>
+                    <td>{{ complaint.id }}</td>
+                    <td>{{ complaint.user.account_number }}</td>
+                    <td>{{ complaint.user.username }}</td>
+                    <td>{{ complaint.user.supervisor_account or '-' }}</td>
+                    <td>{{ complaint.user.supervisor_name or '-' }}</td>
+                    <td>{{ complaint.merchant_account }}</td>
+                    <td>{{ complaint.transaction_number }}</td>
+                    <td>{{ complaint.service.name }}</td>
+                    <td>{{ complaint.sub_service.name }}</td>
+                    <td>
+                        <span class="badge rounded-pill bg-{{ status_colors[complaint.status] }}">
+                            {{ status_labels[complaint.status] }}
+                        </span>
+                    </td>
+                    <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ url_for('complaints.view', id=complaint.id) }}" class="btn btn-sm btn-info" title="عرض التفاصيل">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if current_user.role in ['admin', 'support'] %}
+                            <button class="btn btn-sm btn-danger" onclick="deleteComplaint({{ complaint.id }})" title="حذف الشكوى">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- الترقيم -->
+    {% if complaints.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% for page in complaints.iter_pages() %}
+                {% if page %}
+                    <li class="page-item {% if page == complaints.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('complaints.index', page=page) }}">{{ page }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteComplaint(id) {
+    if (confirm('هل أنت متأكد من حذف هذه الشكوى؟')) {
+        fetch(`/complaints/${id}/delete`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.error || 'حدث خطأ أثناء الحذف');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء الحذف');
+        });
+    }
+}
+
+function exportComplaints() {
+    const form = document.getElementById('searchForm');
+    const formData = new FormData(form);
+    
+    // تحويل بيانات النموذج إلى معلمات URL
+    const params = new URLSearchParams();
+    for (const [key, value] of formData.entries()) {
+        if (value) {
+            params.append(key, value);
+        }
+    }
+    
+    // إنشاء رابط التصدير مع معلمات البحث
+    const exportUrl = `/complaints/download?${params.toString()}`;
+    window.location.href = exportUrl;
+}
+</script>
+{% endblock %} 

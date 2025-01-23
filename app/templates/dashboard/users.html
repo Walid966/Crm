@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+
+{% block title %}إدارة المستخدمين{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- إضافة منطقة لعرض رسائل الخطأ -->
+    <div id="messageArea" class="alert d-none mb-3">
+        <span id="messageText"></span>
+        <button type="button" class="btn-close float-end" onclick="hideMessage()"></button>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>إدارة المستخدمين</h2>
+        <button class="btn btn-success" onclick="showAddUserModal()">
+            <i class="fas fa-plus"></i> إضافة مستخدم
+        </button>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>رقم الحساب</th>
+                    <th>اسم المستخدم</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>الدور</th>
+                    <th>رقم حساب المشرف</th>
+                    <th>اسم المشرف</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr data-user-id="{{ user.id }}">
+                    <td class="user-account">{{ user.account_number }}</td>
+                    <td class="user-name">{{ user.username }}</td>
+                    <td class="user-email">{{ user.email }}</td>
+                    <td>
+                        <span class="user-role">
+                            {% if user.role == 'admin' %}
+                            مدير
+                            {% elif user.role == 'sales' %}
+                            مبيعات
+                            {% elif user.role == 'support' %}
+                            دعم
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="user-supervisor-account">{{ user.supervisor_account or '-' }}</td>
+                    <td class="user-supervisor-name">{{ user.supervisor_name or '-' }}</td>
+                    <td>
+                        {% if user.id != current_user.id and not (current_user.role == 'support' and user.role == 'admin' and user.account_number == '5') %}
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-sm" onclick="editUser({{ user.id }})">
+                                <i class="fas fa-edit"></i> تعديل
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteUser({{ user.id }})">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- نافذة إضافة مستخدم -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة مستخدم جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="mb-3">
+                        <label class="form-label">رقم الحساب</label>
+                        <input type="text" class="form-control" id="newAccountNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم المستخدم</label>
+                        <input type="text" class="form-control" id="newUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" id="newEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">كلمة المرور</label>
+                        <input type="password" class="form-control" id="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الدور</label>
+                        <select class="form-select" id="newRole" required>
+                            <option value="sales">مبيعات</option>
+                            <option value="support">دعم</option>
+                            {% if current_user.role == 'admin' %}
+                            <option value="admin">مدير</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رقم حساب المشرف</label>
+                        <input type="text" class="form-control" id="newSupervisorAccount">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم المشرف</label>
+                        <input type="text" class="form-control" id="newSupervisorName">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-success" onclick="addUser()">إضافة</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة تعديل المستخدم -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تعديل بيانات المستخدم</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <div class="mb-3">
+                        <label class="form-label">رقم الحساب</label>
+                        <input type="text" class="form-control" id="editAccountNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم المستخدم</label>
+                        <input type="text" class="form-control" id="editUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" id="editEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">كلمة المرور</label>
+                        <input type="password" class="form-control" id="editPassword" placeholder="اتركه فارغاً إذا لم ترد تغيير كلمة المرور">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الدور</label>
+                        <select class="form-select" id="editRole" required>
+                            <option value="sales">مبيعات</option>
+                            <option value="support">دعم</option>
+                            {% if current_user.role == 'admin' %}
+                            <option value="admin">مدير</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رقم حساب المشرف</label>
+                        <input type="text" class="form-control" id="editSupervisorAccount">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم المشرف</label>
+                        <input type="text" class="form-control" id="editSupervisorName">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="updateUser()">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentUserId = null;
+const addModal = new bootstrap.Modal(document.getElementById('addUserModal'));
+const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+
+function showAddUserModal() {
+    document.getElementById('addUserForm').reset();
+    addModal.show();
+}
+
+function addUser() {
+    const data = {
+        account_number: document.getElementById('newAccountNumber').value,
+        username: document.getElementById('newUsername').value,
+        email: document.getElementById('newEmail').value,
+        password: document.getElementById('newPassword').value,
+        role: document.getElementById('newRole').value,
+        supervisor_account: document.getElementById('newSupervisorAccount').value,
+        supervisor_name: document.getElementById('newSupervisorName').value
+    };
+    
+    fetch('/dashboard/user/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // إضافة صف جديد للجدول
+            const tbody = document.querySelector('table tbody');
+            const newRow = document.createElement('tr');
+            newRow.setAttribute('data-user-id', data.user.id);
+            
+            const roleText = document.getElementById('newRole').value === 'admin' ? 'مدير' : 
+                           document.getElementById('newRole').value === 'sales' ? 'مبيعات' : 'دعم';
+            
+            newRow.innerHTML = `
+                <td class="user-account">${document.getElementById('newAccountNumber').value}</td>
+                <td class="user-name">${document.getElementById('newUsername').value}</td>
+                <td class="user-email">${document.getElementById('newEmail').value}</td>
+                <td><span class="user-role">${roleText}</span></td>
+                <td class="user-supervisor-account">${document.getElementById('newSupervisorAccount').value || '-'}</td>
+                <td class="user-supervisor-name">${document.getElementById('newSupervisorName').value || '-'}</td>
+                <td>
+                    <div class="btn-group">
+                        <button class="btn btn-primary btn-sm" onclick="editUser(${data.user.id})">
+                            <i class="fas fa-edit"></i> تعديل
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteUser(${data.user.id})">
+                            <i class="fas fa-trash"></i> حذف
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.appendChild(newRow);
+            addModal.hide();
+            toastr.success(data.message);
+            document.getElementById('addUserForm').reset();
+        } else {
+            toastr.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toastr.error('حدث خطأ أثناء إضافة المستخدم');
+    });
+}
+
+function editUser(userId) {
+    currentUserId = userId;
+    
+    fetch(`/dashboard/user/${userId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('editAccountNumber').value = data.account_number;
+            document.getElementById('editUsername').value = data.username;
+            document.getElementById('editEmail').value = data.email;
+            document.getElementById('editRole').value = data.role;
+            document.getElementById('editSupervisorAccount').value = data.supervisor_account || '';
+            document.getElementById('editSupervisorName').value = data.supervisor_name || '';
+            document.getElementById('editPassword').value = '';
+            editModal.show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            toastr.error('حدث خطأ أثناء جلب بيانات المستخدم');
+        });
+}
+
+function updateUser() {
+    const data = {
+        account_number: document.getElementById('editAccountNumber').value,
+        username: document.getElementById('editUsername').value,
+        email: document.getElementById('editEmail').value,
+        role: document.getElementById('editRole').value,
+        supervisor_account: document.getElementById('editSupervisorAccount').value,
+        supervisor_name: document.getElementById('editSupervisorName').value
+    };
+    
+    const password = document.getElementById('editPassword').value;
+    if (password) {
+        data.password = password;
+    }
+    
+    fetch(`/dashboard/user/${currentUserId}/update`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // تحديث البيانات في الجدول مباشرة
+            const row = document.querySelector(`tr[data-user-id="${currentUserId}"]`);
+            if (row) {
+                const cells = row.querySelectorAll('td');
+                cells[0].textContent = document.getElementById('editAccountNumber').value;
+                cells[1].textContent = document.getElementById('editUsername').value;
+                cells[2].textContent = document.getElementById('editEmail').value;
+                
+                const roleText = document.getElementById('editRole').value === 'admin' ? 'مدير' : 
+                               document.getElementById('editRole').value === 'sales' ? 'مبيعات' : 'دعم';
+                cells[3].querySelector('span').textContent = roleText;
+                
+                cells[4].textContent = document.getElementById('editSupervisorAccount').value || '-';
+                cells[5].textContent = document.getElementById('editSupervisorName').value || '-';
+            }
+            
+            editModal.hide();
+            toastr.success(data.message);
+        } else {
+            toastr.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toastr.error('حدث خطأ أثناء تحديث بيانات المستخدم');
+    });
+}
+
+// إضافة دوال جديدة لعرض وإخفاء الرسائل
+function showMessage(message, type) {
+    const messageArea = document.getElementById('messageArea');
+    const messageText = document.getElementById('messageText');
+    messageArea.classList.remove('d-none', 'alert-success', 'alert-danger');
+    messageArea.classList.add(`alert-${type}`);
+    messageText.textContent = message;
+}
+
+function hideMessage() {
+    const messageArea = document.getElementById('messageArea');
+    messageArea.classList.add('d-none');
+}
+
+// تحديث دالة deleteUser
+function deleteUser(userId) {
+    if (confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
+        fetch(`/dashboard/user/${userId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+                if (row) {
+                    row.remove();
+                }
+                showMessage(data.message, 'success');
+            } else {
+                showMessage(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('حدث خطأ أثناء حذف المستخدم', 'danger');
+        });
+    }
+}
+</script>
+{% endblock %} 

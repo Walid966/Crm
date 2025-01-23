@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}معلومات النظام{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">معلومات النظام</h2>
+
+    <!-- معلومات عامة -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">إجمالي الشكاوى</h5>
+                    <h3 class="card-text">{{ system_info.total_complaints }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">المشرفين</h5>
+                    <h3 class="card-text">{{ system_info.total_supervisors }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">المناديب</h5>
+                    <h3 class="card-text">{{ system_info.total_representatives }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">الخدمات</h5>
+                    <h3 class="card-text">{{ system_info.total_services }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات الشكاوى -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">إحصائيات الشكاوى</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-warning">{{ complaints_stats.pending }}</h4>
+                                <p>قيد الانتظار</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-info">{{ complaints_stats.in_progress }}</h4>
+                                <p>قيد المعالجة</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-success">{{ complaints_stats.resolved }}</h4>
+                                <p>تم الحل</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h4 class="text-danger">{{ complaints_stats.rejected }}</h4>
+                                <p>مرفوضة</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- أحدث الشكاوى -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">أحدث الشكاوى</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for complaint in recent_complaints %}
+                        <a href="{{ url_for('complaints.view', id=complaint.id) }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ complaint.merchant_account }}</h6>
+                                <small>{{ complaint.created_at.strftime('%Y-%m-%d') }}</small>
+                            </div>
+                            <p class="mb-1">{{ complaint.notes[:100] }}...</p>
+                            <small class="text-{{ status_colors[complaint.status] }}">{{ status_labels[complaint.status] }}</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- المشرفين والمناديب النشطين -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">أكثر المشرفين نشاطاً</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for supervisor in active_supervisors %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ supervisor.name }}</h6>
+                                <span class="badge bg-primary">{{ supervisor.complaints_count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">أكثر المناديب نشاطاً</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for representative in active_representatives %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ representative.name }}</h6>
+                                <span class="badge bg-info">{{ representative.complaints_count }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

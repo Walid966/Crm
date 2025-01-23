@@ -4,7 +4,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -20,33 +19,48 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-*.manifest
-*.spec
-pip-log.txt
-pip-delete-this-directory.txt
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*,cover
-.hypothesis/
-*.mo
-*.pot
-*.log
-local_settings.py
-instance/
-.webassets-cache
-.env
-.venv
+
+# Virtual Environment
 venv/
 ENV/
-.spyderproject
-.ropeproject
+env/
+
+# IDE
 .idea/
 .vscode/
+*.swp
+*.swo
+
+# Database
 *.db
-static/uploads/*
-!static/uploads/.gitkeep
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+.env.*
+
+# Uploads
+app/static/uploads/
+app/static/uploads/profiles/
+app/static/uploads/complaints/
+app/static/uploads/responses/
+app/static/uploads/templates/
+
+# Media
+app/static/media/
+app/static/images/
+app/static/sounds/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# System files
+.DS_Store
+Thumbs.db 

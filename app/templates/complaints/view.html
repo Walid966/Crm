@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}عرض الشكوى{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- تفاصيل الشكوى -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">تفاصيل الشكوى #{{ complaint.id }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>معلومات التاجر</h6>
+                            <p>
+                                <strong>رقم الحساب:</strong> {{ complaint.merchant_account }}<br>
+                                <strong>رقم العملية:</strong> {{ complaint.transaction_number }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>معلومات الخدمة</h6>
+                            <p>
+                                <strong>نوع الخدمة:</strong> {{ complaint.service.name }}<br>
+                                <strong>الخدمة الفرعية:</strong> {{ complaint.sub_service.name }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>الملاحظات</h6>
+                        <p>{{ complaint.notes }}</p>
+                    </div>
+
+                    {% if complaint.attachment %}
+                    <div class="mb-3">
+                        <h6>المرفقات</h6>
+                        {% if complaint.attachment.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) %}
+                        <div class="image-container mb-2">
+                            <img src="{{ url_for('complaints.uploads', filename=complaint.attachment) }}" class="img-fluid rounded cursor-pointer" 
+                                 alt="مرفق الشكوى" style="max-width: 100%; max-height: 400px; cursor: pointer"
+                                 onclick="openImageModal(this.src)">
+                        </div>
+                        <a href="{{ url_for('complaints.uploads', filename=complaint.attachment) }}" class="btn btn-primary" download>
+                            <i class="fas fa-download"></i> تحميل الصورة
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('complaints.uploads', filename=complaint.attachment) }}" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-download"></i> تحميل المرفق
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <h6>معلومات إضافية</h6>
+                        <p>
+                            <strong>الحالة:</strong>
+                            <span class="badge bg-{{ status_colors[complaint.status] }}">
+                                {{ status_labels[complaint.status] }}
+                            </span><br>
+                            <strong>تاريخ الإنشاء:</strong> {{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}<br>
+                            <strong>آخر تحديث:</strong> {{ complaint.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- الردود -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">الردود</h5>
+                </div>
+                <div class="card-body">
+                    {% for response in complaint.responses %}
+                    <div class="response mb-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong>{{ response.user.username }}</strong>
+                                <small class="text-muted">{{ response.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                            {% if current_user.role in ['admin', 'support'] or response.user_id == current_user.id %}
+                            <button class="btn btn-sm btn-danger" onclick="deleteResponse({{ response.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                        <p>{{ response.response }}</p>
+                        {% if response.attachment %}
+                        <div class="mt-2">
+                            {% if response.attachment.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) %}
+                            <div class="image-container mb-2">
+                                <img src="{{ url_for('complaints.uploads', filename=response.attachment) }}" class="img-fluid rounded cursor-pointer" 
+                                     alt="مرفق الرد" style="max-width: 100%; max-height: 300px; cursor: pointer"
+                                     onclick="openImageModal(this.src)">
+                            </div>
+                            <a href="{{ url_for('complaints.uploads', filename=response.attachment) }}" class="btn btn-primary btn-sm" download>
+                                <i class="fas fa-download"></i> تحميل الصورة
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('complaints.uploads', filename=response.attachment) }}" class="btn btn-primary btn-sm" target="_blank">
+                                <i class="fas fa-download"></i> تحميل المرفق
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">لا توجد ردود</p>
+                    {% endfor %}
+
+                    <!-- نموذج الرد -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">إضافة رد</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('complaints.add_response', id=complaint.id) }}" enctype="multipart/form-data">
+                                {{ form.csrf_token }}
+                                <div class="mb-3">
+                                    {{ form.response.label(class="form-label") }}
+                                    {{ form.response(class="form-control", rows=3) }}
+                                    {% if form.response.errors %}
+                                        {% for error in form.response.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                {% if current_user.role in ['admin', 'support'] %}
+                                <div class="mb-3">
+                                    {{ form.status.label(class="form-label") }}
+                                    {{ form.status(class="form-select") }}
+                                    {% if form.status.errors %}
+                                        {% for error in form.status.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                <div class="mb-3">
+                                    {{ form.attachment.label(class="form-label") }}
+                                    {{ form.attachment(class="form-control") }}
+                                    {% if form.attachment.errors %}
+                                        {% for error in form.attachment.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                {{ form.submit(class="btn btn-primary") }}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الشريط الجانبي -->
+        <div class="col-md-4">
+            <!-- معلومات المستخدم -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">معلومات المستخدم</h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <strong>رقم حساب المشرف:</strong> {{ complaint.user.supervisor_account or '-' }}<br>
+                        <strong>اسم المشرف:</strong> {{ complaint.user.supervisor_name or '-' }}<br>
+                        <strong>اسم المستخدم:</strong> {{ complaint.user.username }}<br>
+                        <strong>رقم الحساب:</strong> {{ complaint.user.account_number }}<br>
+                        <strong>الدور:</strong> {{ complaint.user.role }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- الإحصائيات -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">إحصائيات</h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <strong>عدد الردود:</strong> {{ complaint.responses|length }}<br>
+                        <strong>مدة الانتظار:</strong> {{ waiting_time }}<br>
+                        <strong>آخر تحديث منذ:</strong> {{ last_update }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Image Preview -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">معاينة الصورة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid" alt="معاينة الصورة">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function deleteResponse(id) {
+    if (confirm('هل أنت متأكد من حذف هذا الرد؟')) {
+        fetch(`/complaints/response/${id}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            }
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            }
+        });
+    }
+}
+
+function openImageModal(src) {
+    const modalImage = document.getElementById('modalImage');
+    modalImage.src = src;
+    const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+    modal.show();
+}
+</script>
+{% endblock %} 

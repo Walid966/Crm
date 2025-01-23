@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة النظام{% endblock %}
+
+{% block styles %}
+<!-- إضافة مكتبة Toastr -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <!-- قسم إدارة الخدمات -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="card-title mb-0">إدارة الخدمات</h4>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-primary" onclick="showAddServiceModal()">
+                                <i class="fas fa-plus"></i> إضافة خدمة
+                            </button>
+                            <button class="btn btn-sm btn-success" onclick="showImportServicesModal()">
+                                <i class="fas fa-file-excel"></i> استيراد من Excel
+                            </button>
+                            <a href="{{ url_for('management.download_service_template') }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-download"></i> تنزيل نموذج Excel
+                            </a>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-centered table-nowrap mb-0">
+                            <thead>
+                                <tr>
+                                    <th>اسم الخدمة</th>
+                                    <th>عدد الخدمات الفرعية</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for service in services %}
+                                <tr data-service-id="{{ service.id }}">
+                                    <td>{{ service.name }}</td>
+                                    <td>{{ service.sub_services|length }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info" onclick="editService({{ service.id }})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteService({{ service.id }})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة خدمة -->
+<div class="modal fade" id="addServiceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="addServiceForm" onsubmit="return submitServiceForm(event)">
+                <div class="modal-header">
+                    <h5 class="modal-title">إضافة خدمة جديدة</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">اسم الخدمة</label>
+                        <input type="text" class="form-control" name="name" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">الخدمات الفرعية</label>
+                        <div id="subServices">
+                            <div class="sub-service-entry mb-3">
+                                <div class="row">
+                                    <div class="col-md-10">
+                                        <input type="text" class="form-control" name="sub_service_name[]" placeholder="اسم الخدمة الفرعية" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-danger" onclick="removeSubService(this)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="addSubService()">
+                            <i class="fas fa-plus"></i> إضافة خدمة فرعية
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تعديل خدمة -->
+<div class="modal fade" id="editServiceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editServiceForm" onsubmit="return submitEditServiceForm(event)">
+                <input type="hidden" name="service_id" id="edit_service_id">
+                <div class="modal-header">
+                    <h5 class="modal-title">تعديل خدمة</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">اسم الخدمة</label>
+                        <input type="text" class="form-control" name="name" id="edit_service_name" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">الخدمات الفرعية</label>
+                        <div id="edit_sub_services">
+                            <!-- سيتم إضافة الخدمات الفرعية هنا -->
+                        </div>
+                        <button type="button" class="btn btn-secondary" onclick="addEditSubService()">
+                            <i class="fas fa-plus"></i> إضافة خدمة فرعية
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal استيراد الخدمات -->
+<div class="modal fade" id="importServicesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="importServicesForm" onsubmit="return submitImportServicesForm(event)" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">استيراد الخدمات من ملف Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="file" class="form-control" name="file" accept=".xlsx,.xls" required>
+                        <div class="form-text">
+                            يجب أن يحتوي الملف على الأعمدة التالية:
+                            <ul class="mb-0">
+                                <li>اسم الخدمة</li>
+                                <li>اسم الخدمة الفرعية</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">استيراد</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- إضافة مكتبة Toastr -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script>
+// تهيئة إعدادات Toastr
+toastr.options = {
+    "closeButton": true,
+    "progressBar": true,
+    "positionClass": "toast-top-left",
+    "timeOut": "5000",
+    "preventDuplicates": true,
+    "newestOnTop": true,
+    "rtl": true
+};
+
+function showAddServiceModal() {
+    const modal = new bootstrap.Modal(document.getElementById('addServiceModal'));
+    modal.show();
+}
+
+function addSubService() {
+    const template = `
+        <div class="sub-service-entry mb-3">
+            <div class="row">
+                <div class="col-md-10">
+                    <input type="text" class="form-control" name="sub_service_name[]" placeholder="اسم الخدمة الفرعية" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger" onclick="removeSubService(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('subServices').insertAdjacentHTML('beforeend', template);
+}
+
+function removeSubService(button) {
+    button.closest('.sub-service-entry').remove();
+}
+
+function submitServiceForm(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const name = form.querySelector('[name="name"]').value;
+    const sub_services = Array.from(form.querySelectorAll('[name="sub_service_name[]"]'))
+        .map(input => input.value)
+        .filter(value => value.trim() !== '');
+    
+    const data = {
+        name: name,
+        sub_services: sub_services.map(name => ({ name }))
+    };
+    
+    fetch('/management/service/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addServiceModal')).hide();
+            location.reload();
+        } else {
+            alert(data.message || 'حدث خطأ أثناء إضافة الخدمة');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء إرسال البيانات');
+    });
+    
+    return false;
+}
+
+function deleteService(id) {
+    if (confirm('هل أنت متأكد من حذف هذه الخدمة؟')) {
+        fetch(`/management/service/${id}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // إزالة الصف من الجدول مباشرة
+                const row = document.querySelector(`tr[data-service-id="${id}"]`);
+                if (row) {
+                    row.remove();
+                }
+                alert(data.message);
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء حذف الخدمة');
+        });
+    }
+}
+
+function editService(id) {
+    fetch(`/management/service/${id}/get`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const service = data.service;
+            
+            document.getElementById('edit_service_id').value = service.id;
+            document.getElementById('edit_service_name').value = service.name;
+            
+            const editSubServicesDiv = document.getElementById('edit_sub_services');
+            editSubServicesDiv.innerHTML = '';
+            
+            service.sub_services.forEach(sub => {
+                const template = `
+                    <div class="sub-service-entry mb-3">
+                        <div class="row">
+                            <div class="col-md-10">
+                                <input type="text" class="form-control" name="sub_service_name[]" 
+                                       value="${sub.name}" placeholder="اسم الخدمة الفرعية" required>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-danger" onclick="removeEditSubService(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                editSubServicesDiv.insertAdjacentHTML('beforeend', template);
+            });
+            
+            const modal = new bootstrap.Modal(document.getElementById('editServiceModal'));
+            modal.show();
+        } else {
+            alert(data.message || 'حدث خطأ أثناء جلب بيانات الخدمة');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء جلب بيانات الخدمة');
+    });
+}
+
+function addEditSubService() {
+    const template = `
+        <div class="sub-service-entry mb-3">
+            <div class="row">
+                <div class="col-md-10">
+                    <input type="text" class="form-control" name="sub_service_name[]" 
+                           placeholder="اسم الخدمة الفرعية" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger" onclick="removeEditSubService(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('edit_sub_services').insertAdjacentHTML('beforeend', template);
+}
+
+function removeEditSubService(button) {
+    button.closest('.sub-service-entry').remove();
+}
+
+function submitEditServiceForm(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const id = form.querySelector('[name="service_id"]').value;
+    const name = form.querySelector('[name="name"]').value;
+    const sub_services = Array.from(form.querySelectorAll('[name="sub_service_name[]"]'))
+        .map(input => input.value)
+        .filter(value => value.trim() !== '');
+    
+    const data = {
+        name: name,
+        sub_services: sub_services.map(name => ({ name }))
+    };
+    
+    fetch(`/management/service/${id}/edit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editServiceModal')).hide();
+            location.reload();
+        } else {
+            alert(data.message || 'حدث خطأ أثناء تحديث الخدمة');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء إرسال البيانات');
+    });
+    
+    return false;
+}
+
+function showImportServicesModal() {
+    const modal = new bootstrap.Modal(document.getElementById('importServicesModal'));
+    modal.show();
+}
+
+function submitImportServicesForm(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    fetch('/management/services/import', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('importServicesModal')).hide();
+            location.reload();
+        } else {
+            alert(data.message || 'حدث خطأ أثناء استيراد البيانات');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء استيراد البيانات');
+    });
+    
+    return false;
+}
+</script>
+{% endblock %} 

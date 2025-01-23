@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}الإحصائيات{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- البطاقات السريعة -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">إجمالي الشكاوى</h6>
+                            <h2 class="mt-2 mb-0">{{ stats.total_complaints }}</h2>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">الشكاوى المحلولة</h6>
+                            <h2 class="mt-2 mb-0">{{ stats.resolved_complaints }}</h2>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">قيد المعالجة</h6>
+                            <h2 class="mt-2 mb-0">{{ stats.in_progress_complaints }}</h2>
+                        </div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">قيد الانتظار</h6>
+                            <h2 class="mt-2 mb-0">{{ stats.pending_complaints }}</h2>
+                        </div>
+                        <i class="fas fa-hourglass-half fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- إحصائيات المشرفين -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">أداء المشرفين</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="supervisorsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- إحصائيات الخدمات -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">توزيع الشكاوى حسب الخدمات</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="servicesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- إحصائيات المناديب -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">أداء المناديب</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="representativesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- إحصائيات الحالة -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">توزيع الشكاوى حسب الحالة</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول أفضل المشرفين -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">أفضل المشرفين</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>المشرف</th>
+                                    <th>عدد الشكاوى</th>
+                                    <th>نسبة الحل</th>
+                                    <th>متوسط وقت الحل</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for supervisor in stats.top_supervisors %}
+                                <tr>
+                                    <td>{{ supervisor.name }}</td>
+                                    <td>{{ supervisor.total_complaints }}</td>
+                                    <td>{{ "%.1f"|format(supervisor.resolution_rate) }}%</td>
+                                    <td>{{ supervisor.avg_resolution_time }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول أفضل المناديب -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">أفضل المناديب</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>المندوب</th>
+                                    <th>عدد الشكاوى</th>
+                                    <th>نسبة الحل</th>
+                                    <th>متوسط وقت الحل</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for representative in stats.top_representatives %}
+                                <tr>
+                                    <td>{{ representative.name }}</td>
+                                    <td>{{ representative.total_complaints }}</td>
+                                    <td>{{ "%.1f"|format(representative.resolution_rate) }}%</td>
+                                    <td>{{ representative.avg_resolution_time }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// تهيئة الرسوم البيانية
+document.addEventListener('DOMContentLoaded', function() {
+    // رسم بياني للمشرفين
+    new Chart(document.getElementById('supervisorsChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ stats.supervisors_data.labels|tojson }},
+            datasets: [{
+                label: 'عدد الشكاوى',
+                data: {{ stats.supervisors_data.values|tojson }},
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // رسم بياني للخدمات
+    new Chart(document.getElementById('servicesChart'), {
+        type: 'pie',
+        data: {
+            labels: {{ stats.services_data.labels|tojson }},
+            datasets: [{
+                data: {{ stats.services_data.values|tojson }},
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+
+    // رسم بياني للمناديب
+    new Chart(document.getElementById('representativesChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ stats.representatives_data.labels|tojson }},
+            datasets: [{
+                label: 'عدد الشكاوى',
+                data: {{ stats.representatives_data.values|tojson }},
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // رسم بياني للحالة
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ stats.status_data.labels|tojson }},
+            datasets: [{
+                data: {{ stats.status_data.values|tojson }},
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير الشكاوى</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            direction: rtl;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+        }
+        th {
+            background-color: #4B5563;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>تقرير الشكاوى</h1>
+        <p>تم إنشاء التقرير في: {{ generated_at.strftime('%Y-%m-%d %H:%M') }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>رقم الشكوى</th>
+                <th>رقم حساب المشرف</th>
+                <th>اسم المشرف</th>
+                <th>رقم حساب المستخدم</th>
+                <th>اسم المستخدم</th>
+                <th>التاجر</th>
+                <th>رقم العملية</th>
+                <th>الخدمة</th>
+                <th>الخدمة الفرعية</th>
+                <th>الحالة</th>
+                <th>تاريخ الإنشاء</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for complaint in complaints %}
+            <tr>
+                <td>{{ complaint.id }}</td>
+                <td>{{ complaint.user.supervisor_account or '-' }}</td>
+                <td>{{ complaint.user.supervisor_name or '-' }}</td>
+                <td>{{ complaint.user.account_number }}</td>
+                <td>{{ complaint.user.username }}</td>
+                <td>{{ complaint.merchant_account }}</td>
+                <td>{{ complaint.transaction_number }}</td>
+                <td>{{ complaint.service.name }}</td>
+                <td>{{ complaint.sub_service.name }}</td>
+                <td>{{ complaint.status }}</td>
+                <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>نظام إدارة الشكاوى - جميع الحقوق محفوظة © {{ generated_at.year }}</p>
+    </div>
+</body>
+</html> 
