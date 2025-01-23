@@ -42,10 +42,10 @@ def index():
     
     # تصفية حسب دور المستخدم
     if current_user.role == 'sales':
-        query = query.filter_by(user_id=current_user.id)
+        query = query.filter(Complaint.user_id == current_user.id)
     
     # تطبيق معايير البحث
-    if request.method == 'POST':
+    if form.validate_on_submit():
         if form.supervisor_account.data:
             query = query.filter(User.supervisor_account == form.supervisor_account.data)
         if form.user_account.data:
@@ -65,7 +65,6 @@ def index():
         if form.date_to.data:
             query = query.filter(Complaint.created_at <= form.date_to.data)
     
-    # تحديد رقم الصفحة
     page = request.args.get('page', 1, type=int)
     
     # جلب الشكاوى مع الترقيم

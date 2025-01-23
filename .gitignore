@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -23,7 +24,6 @@ wheels/
 # Virtual Environment
 venv/
 ENV/
-env/
 
 # IDE
 .idea/
@@ -31,36 +31,13 @@ env/
 *.swp
 *.swo
 
-# Database
-*.db
-*.sqlite3
-
-# Logs
-logs/
-*.log
-
-# Environment variables
+# Project specific
+instance/
 .env
-.env.*
-
-# Uploads
+*.db
 app/static/uploads/
-app/static/uploads/profiles/
-app/static/uploads/complaints/
-app/static/uploads/responses/
-app/static/uploads/templates/
+logs/
 
-# Media
-app/static/media/
-app/static/images/
-app/static/sounds/
-
-# Temporary files
-*.tmp
-*.bak
-*.swp
-*~
-
-# System files
+# System Files
 .DS_Store
 Thumbs.db 
