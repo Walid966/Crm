@@ -59,6 +59,12 @@ def create_app(config_class=Config):
     from app.routes.api import bp as api_bp
     app.register_blueprint(api_bp)
     
+    # معالج السياق للقوالب
+    @app.context_processor
+    def inject_now():
+        from datetime import datetime
+        return {'now': datetime.now()}
+    
     # إعداد التسجيل
     if not app.debug and not app.testing:
         if not os.path.exists('logs'):

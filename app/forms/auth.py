@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationE
 from app.models import User
 
 class LoginForm(FlaskForm):
-    account_number = StringField('رقم الحساب', validators=[
+    account_number = StringField('رقم الحساب أو البريد الإلكتروني', validators=[
         DataRequired(message='هذا الحقل مطلوب')
     ])
     password = PasswordField('كلمة المرور', validators=[

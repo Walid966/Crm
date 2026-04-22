@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="h-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,11 +17,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block styles %}{% endblock %}
 </head>
-<body>
+<body class="d-flex flex-column h-100">
     <!-- القائمة العلوية -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
         <div class="container">
-            <a class="navbar-brand text-white" href="{{ url_for('dashboard.index') }}" style="text-decoration: none !important;">نظام إدارة الشكاوى</a>
+            <a class="navbar-brand" href="{{ url_for('dashboard.index') }}" style="text-decoration: none !important;">
+                <i class="fas fa-shield-halved me-2"></i> نظام إدارة الشكاوى
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -30,26 +32,24 @@
                 {% if current_user.is_authenticated %}
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard.index') }}">
-                            <i class="fas fa-home"></i> الرئيسية
+                        <a class="nav-link text-dark fw-bold" href="{{ url_for('dashboard.index') }}">
+                            <i class="fas fa-home me-1"></i> الرئيسية
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('complaints.index') }}">
-                            <i class="fas fa-clipboard-list"></i> الشكاوى
+                        <a class="nav-link text-dark fw-bold" href="{{ url_for('complaints.index') }}">
+                            <i class="fas fa-clipboard-list me-1"></i> الشكاوى
                         </a>
                     </li>
                     {% if current_user.role in ['admin', 'support'] %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard.users') }}">
-                            <i class="fas fa-users"></i> إدارة المستخدمين
+                        <a class="nav-link text-dark fw-bold" href="{{ url_for('dashboard.users') }}">
+                            <i class="fas fa-users me-1"></i> المستخدمين
                         </a>
                     </li>
-                    {% endif %}
-                    {% if current_user.role in ['admin', 'support'] %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('management.index') }}">
-                            <i class="fas fa-cogs"></i> إدارة البيانات
+                        <a class="nav-link text-dark fw-bold" href="{{ url_for('management.index') }}">
+                            <i class="fas fa-chart-pie me-1"></i> الإدارة
                         </a>
                     </li>
                     {% endif %}
@@ -57,7 +57,7 @@
                 
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button" 
+                        <a class="nav-link dropdown-toggle text-dark" href="#" id="notificationsDropdown" role="button" 
                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell"></i>
                             {% if current_user.unread_notifications_count > 0 %}
@@ -87,7 +87,7 @@
                     </li>
                     
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                        <a class="nav-link dropdown-toggle text-dark" href="#" id="userDropdown" role="button" 
                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user"></i> {{ current_user.username }}
                         </a>
@@ -112,30 +112,47 @@
     </nav>
     
     <!-- رسائل التنبيه -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
+    <div id="flash-messages" style="display: none;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
                 {% for category, message in messages %}
-                    {% if category == 'error' %}
-                        toastr.error('{{ message }}');
-                    {% elif category == 'success' %}
-                        toastr.success('{{ message }}');
-                    {% elif category == 'warning' %}
-                        toastr.warning('{{ message }}');
-                    {% else %}
-                        toastr.info('{{ message }}');
-                    {% endif %}
+                    <div class="flash-message" data-category="{{ category }}" data-message="{{ message }}"></div>
                 {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(msg => {
+                const category = msg.getAttribute('data-category');
+                const message = msg.getAttribute('data-message');
+                
+                if (category === 'error') {
+                    toastr.error(message);
+                } else if (category === 'success') {
+                    toastr.success(message);
+                } else if (category === 'warning') {
+                    toastr.warning(message);
+                } else {
+                    toastr.info(message);
+                }
             });
-        </script>
-        {% endif %}
-    {% endwith %}
+        });
+    </script>
     
     <!-- المحتوى الرئيسي -->
-    <main class="py-4">
+    <main class="flex-shrink-0 py-4">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- التذييل -->
+    <footer class="footer mt-auto py-3 bg-white border-top">
+        <div class="container text-center">
+            <span class="text-muted">© {{ now.year if now else 2024 }} {{ config['COMPANY_NAME'] }} - جميع الحقوق محفوظة</span>
+        </div>
+    </footer>
     
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

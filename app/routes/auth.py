@@ -14,25 +14,36 @@ def login():
         return redirect(url_for('dashboard.index'))
     
     form = LoginForm()
-    if form.validate_on_submit():
-        current_app.logger.info(f'محاولة تسجيل دخول برقم الحساب: {form.account_number.data}')
-        user = User.query.filter_by(account_number=form.account_number.data).first()
-        if user:
-            current_app.logger.info(f'تم العثور على المستخدم: {user.username}')
-            if check_password_hash(user.password, form.password.data):
-                current_app.logger.info('كلمة المرور صحيحة')
-                login_user(user, remember=form.remember_me.data)
-                current_app.logger.info(f'تم تسجيل الدخول بنجاح. تذكرني: {form.remember_me.data}')
-                next_page = request.args.get('next')
-                flash(f'مرحباً {user.username}! تم تسجيل دخولك بنجاح', 'success')
-                return redirect(next_page or url_for('dashboard.index'))
+    if request.method == 'POST':
+        current_app.logger.info('=== استلام طلب تسجيل دخول (POST) ===')
+        if form.validate_on_submit():
+            current_app.logger.info(f'محاولة تسجيل دخول: {form.account_number.data}')
+            # البحث عن المستخدم برقم الحساب أو البريد الإلكتروني
+            user = User.query.filter(
+                (User.account_number == form.account_number.data) | 
+                (User.email == form.account_number.data)
+            ).first()
+            
+            if user:
+                current_app.logger.info(f'تم العثور على المستخدم: {user.username}')
+                if check_password_hash(user.password, form.password.data):
+                    current_app.logger.info('كلمة المرور صحيحة')
+                    login_user(user, remember=form.remember_me.data)
+                    current_app.logger.info(f'تم تسجيل الدخول بنجاح. تذكرني: {form.remember_me.data}')
+                    next_page = request.args.get('next')
+                    flash(f'مرحباً {user.username}! تم تسجيل دخولك بنجاح', 'success')
+                    return redirect(next_page or url_for('dashboard.index'))
+                else:
+                    current_app.logger.warning('كلمة المرور غير صحيحة')
             else:
-                current_app.logger.warning('كلمة المرور غير صحيحة')
+                current_app.logger.warning('لم يتم العثور على المستخدم')
+            flash('رقم الحساب أو كلمة المرور غير صحيحة', 'error')
         else:
-            current_app.logger.warning('لم يتم العثور على المستخدم')
-        flash('رقم الحساب أو كلمة المرور غير صحيحة', 'error')
+            current_app.logger.warning('فشل التحقق من صحة النموذج (Form Validation Failed)')
+            for field, errors in form.errors.items():
+                current_app.logger.warning(f'خطأ في الحقل {field}: {errors}')
     
-    return render_template('auth/login.html', form=form, now=datetime.now())
+    return render_template('auth/login.html', form=form)
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -52,12 +63,12 @@ def register():
             if User.query.filter_by(account_number=form.account_number.data).first():
                 current_app.logger.warning(f'رقم الحساب {form.account_number.data} مستخدم بالفعل')
                 flash('رقم الحساب مستخدم بالفعل', 'error')
-                return render_template('auth/register.html', form=form, now=datetime.now())
+                return render_template('auth/register.html', form=form)
             
             if User.query.filter_by(email=form.email.data).first():
                 current_app.logger.warning(f'البريد الإلكتروني {form.email.data} مستخدم بالفعل')
                 flash('البريد الإلكتروني مستخدم بالفعل', 'error')
-                return render_template('auth/register.html', form=form, now=datetime.now())
+                return render_template('auth/register.html', form=form)
             
             # إنشاء المستخدم
             user = User(
@@ -86,7 +97,7 @@ def register():
             for field, errors in form.errors.items():
                 current_app.logger.warning(f'{field}: {", ".join(errors)}')
     
-    return render_template('auth/register.html', form=form, now=datetime.now())
+    return render_template('auth/register.html', form=form)
 
 @bp.route('/logout')
 @login_required

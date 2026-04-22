@@ -1,15 +1,8 @@
-// إعداد صوت الإشعارات
-const notificationSound = new Audio('/static/sounds/notification.mp3');
-
-function playNotificationSound() {
-    notificationSound.play().catch(error => {
-        console.log('فشل تشغيل صوت الإشعار:', error);
-    });
-}
-
 function showNotification(message, type = 'info') {
     // تشغيل الصوت
-    playNotificationSound();
+    if (typeof playNotificationSound === 'function') {
+        playNotificationSound();
+    }
     
     // إظهار الإشعار
     toastr.options = {

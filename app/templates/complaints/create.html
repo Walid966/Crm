@@ -3,100 +3,88 @@
 {% block title %}إنشاء شكوى جديدة{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container animate-fade-in">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">إنشاء شكوى جديدة</h5>
-                </div>
-                <div class="card-body">
-                    <!-- إرشادات عامة -->
-                    <div class="alert alert-info mb-4">
-                        <h6 class="alert-heading"><i class="fas fa-info-circle"></i> إرشادات تعبئة النموذج</h6>
-                        <ul class="mb-0">
-                            <li>يجب اختيار الخدمة أولاً، ثم اختيار الخدمة الفرعية المناسبة</li>
-                            <li>تأكد من صحة رقم حساب التاجر ورقم العملية</li>
-                            <li>يمكنك إرفاق صور أو مستندات داعمة للشكوى</li>
-                        </ul>
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white py-4 border-bottom text-center">
+                    <div class="app-logo-container mb-3 mx-auto" style="width: 70px; height: 70px;">
+                        <i class="fas fa-paper-plane fa-2x"></i>
                     </div>
-
-                    <!-- منطقة عرض رسائل الخطأ -->
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
+                    <h3 class="fw-bold text-dark">تقديم شكوى جديدة</h3>
+                    <p class="text-muted small">يرجى تعبئة كافة التفاصيل لمساعدتنا في حل مشكلتك بأسرع وقت</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <!-- إرشادات عامة -->
+                    <div class="alert alert-info border-0 rounded-3 shadow-sm mb-5" style="background-color: #f0f7ff;">
+                        <div class="d-flex">
+                            <i class="fas fa-info-circle fa-2x text-primary me-3 mt-1"></i>
+                            <div>
+                                <h6 class="fw-bold text-primary mb-2">إرشادات تعبئة النموذج</h6>
+                                <ul class="mb-0 small text-dark opacity-75">
+                                    <li>يجب اختيار الخدمة الرئيسية أولاً لتفعيل الخدمات الفرعية.</li>
+                                    <li>تأكد من دقة رقم حساب التاجر ورقم العملية لضمان سرعة المعالجة.</li>
+                                    <li>يمكنك إرفاق صور (JPG/PNG) أو مستندات (PDF) لدعم شكواك.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
 
                     <form method="POST" enctype="multipart/form-data" id="complaintForm">
                         {{ form.csrf_token }}
 
-                        <div class="mb-3">
-                            <div class="form-group">
-                                {{ form.merchant_account.label(class="form-label") }}
-                                {{ form.merchant_account(class="form-control", placeholder="أدخل رقم حساب التاجر") }}
-                            </div>
+                        <div class="form-floating mb-4">
+                            {{ form.merchant_account(class="form-control", placeholder=" ") }}
+                            {{ form.merchant_account.label }}
+                            <div class="form-text small">أدخل رقم حساب التاجر المكون من أرقام</div>
                         </div>
 
-                        <div class="row mb-3">
+                        <div class="row g-4 mb-4">
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    {{ form.service.label(class="form-label") }}
-                                    {{ form.service(class="form-control") }}
-                                    <small class="text-muted">اختر نوع الخدمة الرئيسية</small>
+                                <div class="form-floating">
+                                    {{ form.service(class="form-select") }}
+                                    {{ form.service.label }}
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    {{ form.sub_service.label(class="form-label") }}
-                                    {{ form.sub_service(class="form-control") }}
-                                    <small class="text-muted">اختر الخدمة الفرعية المناسبة</small>
+                                <div class="form-floating">
+                                    {{ form.sub_service(class="form-select") }}
+                                    {{ form.sub_service.label }}
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <div class="form-group">
-                                {{ form.transaction_number.label(class="form-label") }}
-                                {{ form.transaction_number(class="form-control" + (" is-invalid" if form.transaction_number.errors else ""), placeholder="مثال: 123456") }}
-                                {% if form.transaction_number.errors %}
-                                    {% for error in form.transaction_number.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ error }}
-                                        </div>
-                                    {% endfor %}
-                                {% endif %}
-                                <small class="text-muted">أدخل رقم العملية (أرقام فقط)</small>
-                            </div>
+                        <div class="form-floating mb-4">
+                            {{ form.transaction_number(class="form-control" + (" is-invalid" if form.transaction_number.errors else ""), placeholder=" ") }}
+                            {{ form.transaction_number.label }}
+                            {% if form.transaction_number.errors %}
+                                {% for error in form.transaction_number.errors %}
+                                    <div class="invalid-feedback fw-bold">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-text small">أدخل رقم العملية (مثال: 12345678)</div>
                         </div>
 
-                        <div class="mb-3">
-                            <div class="form-group">
-                                {{ form.notes.label(class="form-label") }}
-                                {{ form.notes(class="form-control", rows=5, placeholder="اكتب تفاصيل الشكوى هنا...") }}
-                                <small class="text-muted">اشرح المشكلة بالتفصيل وأضف أي معلومات مهمة</small>
-                            </div>
+                        <div class="form-floating mb-4">
+                            {{ form.notes(class="form-control", style="height: 150px;", placeholder=" ") }}
+                            {{ form.notes.label }}
+                            <div class="form-text small">اشرح المشكلة بالتفصيل وأضف أي معلومات تراها مهمة</div>
                         </div>
 
-                        <div class="mb-3">
-                            <div class="form-group">
-                                {{ form.attachment.label(class="form-label") }}
-                                {{ form.attachment(class="form-control") }}
-                                <small class="text-muted">يمكنك إرفاق صور (JPG, PNG, GIF) أو مستندات (PDF, DOC, DOCX)</small>
-                            </div>
+                        <div class="mb-5">
+                            <label class="form-label fw-bold text-dark mb-2">
+                                <i class="fas fa-paperclip me-1 text-primary"></i> المرفقات (اختياري)
+                            </label>
+                            {{ form.attachment(class="form-control rounded-3") }}
+                            <div class="form-text small">الحد الأقصى لحجم الملف: 5 ميجابايت (صور أو مستندات)</div>
                         </div>
 
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-paper-plane"></i> إرسال الشكوى
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 shadow-sm">
+                                <i class="fas fa-check-circle me-1"></i> إرسال الشكوى الآن
                             </button>
-                            <a href="{{ url_for('complaints.index') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> إلغاء
+                            <a href="{{ url_for('complaints.index') }}" class="btn btn-light rounded-pill px-5 py-2">
+                                <i class="fas fa-times me-1"></i> إلغاء
                             </a>
                         </div>
                     </form>

@@ -3,51 +3,59 @@
 {% block title %}تسجيل الدخول{% endblock %}
 
 {% block content %}
-<div class="text-center mb-4">
-    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="img-fluid" style="max-width: 200px;">
-</div>
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">تسجيل الدخول</h5>
+<div class="auth-bg"></div>
+<div class="container h-100">
+    <div class="row h-100 align-items-center justify-content-center">
+        <div class="col-md-5">
+            <div class="glass-card p-5 text-center">
+                <div class="app-logo-container mx-auto">
+                    <i class="fas fa-shield-halved app-logo-icon"></i>
                 </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('auth.login') }}">
-                        {{ form.csrf_token }}
-                        
-                        <div class="mb-3">
-                            {{ form.account_number.label(class="form-label") }}
-                            {{ form.account_number(class="form-control") }}
-                            {% if form.account_number.errors %}
-                                {% for error in form.account_number.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
+                <h1 class="app-logo-text">نظام الشكاوى</h1>
+                
+                <form method="POST" action="{{ url_for('auth.login') }}" class="text-start">
+                    {{ form.csrf_token }}
+                    
+                    <div class="form-floating mb-3">
+                        {{ form.account_number(class="form-control", placeholder="name@example.com") }}
+                        {{ form.account_number.label }}
+                        {% if form.account_number.errors %}
+                            {% for error in form.account_number.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
 
-                        <div class="mb-3">
-                            {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control") }}
-                            {% if form.password.errors %}
-                                {% for error in form.password.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
+                    <div class="form-floating mb-3">
+                        {{ form.password(class="form-control", placeholder="Password") }}
+                        {{ form.password.label }}
+                        {% if form.password.errors %}
+                            {% for error in form.password.errors %}
+                                <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
 
-                        <div class="mb-3 form-check">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
                             {{ form.remember_me(class="form-check-input") }}
-                            {{ form.remember_me.label(class="form-check-label") }}
+                            {{ form.remember_me.label(class="form-check-label small text-muted") }}
                         </div>
+                        <a href="#" class="small text-decoration-none">نسيت كلمة المرور؟</a>
+                    </div>
 
-                        {{ form.submit(class="btn btn-primary w-100") }}
-                    </form>
+                    <button type="submit" class="btn btn-auth w-100 mb-3">
+                        <i class="fas fa-sign-in-alt me-2"></i> دخول آمن
+                    </button>
+                </form>
+
+                <div class="mt-4">
+                    <p class="text-muted small">ليس لديك حساب؟ <a href="{{ url_for('auth.register') }}" class="text-primary fw-bold text-decoration-none">إنشاء حساب جديد</a></p>
                 </div>
-                <div class="card-footer text-center">
-                    <p class="mb-0">ليس لديك حساب؟ <a href="{{ url_for('auth.register') }}">إنشاء حساب جديد</a></p>
-                </div>
+            </div>
+            
+            <div class="text-center mt-4 text-white-50 small">
+                &copy; {{ now.year if now else 2024 }} نظام إدارة الشكاوى الذكي
             </div>
         </div>
     </div>

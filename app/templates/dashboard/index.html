@@ -3,134 +3,141 @@
 {% block title %}لوحة التحكم{% endblock %}
 
 {% block content %}
-<div class="row mb-4 justify-content-center">
-    <div class="col-md-2 mb-3">
-        <div class="card bg-primary text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title mb-0 small">إجمالي الشكاوى</h6>
-                        <h3 class="mt-2 mb-0">{{ total_complaints }}</h3>
-                    </div>
-                    <i class="fas fa-comments fa-2x opacity-50"></i>
-                </div>
-            </div>
+<div class="container animate-fade-in">
+    <!-- قسم الترحيب -->
+    <div class="welcome-section d-flex justify-content-between align-items-center">
+        <div>
+            <h2>مرحباً، {{ current_user.username }}! 👋</h2>
+            <p class="mb-0 opacity-75">إليك نظرة سريعة على حالة الشكاوى اليوم.</p>
+        </div>
+        <div class="d-none d-md-block">
+            <i class="fas fa-chart-line fa-3x opacity-25"></i>
         </div>
     </div>
-    <div class="col-md-2 mb-3">
-        <div class="card bg-warning text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title mb-0 small">قيد الانتظار</h6>
-                        <h3 class="mt-2 mb-0">{{ pending_complaints }}</h3>
-                    </div>
-                    <i class="fas fa-clock fa-2x opacity-50"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 mb-3">
-        <div class="card bg-info text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title mb-0 small">قيد المعالجة</h6>
-                        <h3 class="mt-2 mb-0">{{ in_progress_complaints }}</h3>
-                    </div>
-                    <i class="fas fa-spinner fa-2x opacity-50"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 mb-3">
-        <div class="card bg-success text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title mb-0 small">تم حلها</h6>
-                        <h3 class="mt-2 mb-0">{{ resolved_complaints }}</h3>
-                    </div>
-                    <i class="fas fa-check-circle fa-2x opacity-50"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2 mb-3">
-        <div class="card bg-danger text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title mb-0 small">مرفوضة</h6>
-                        <h3 class="mt-2 mb-0">{{ rejected_complaints }}</h3>
-                    </div>
-                    <i class="fas fa-times-circle fa-2x opacity-50"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row justify-content-center">
-    <div class="col-md-10">
-        <div class="card shadow">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-list"></i>
-                    آخر الشكاوى
-                </h5>
-                {% if current_user.role == 'sales' %}
-                <a href="{{ url_for('complaints.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> شكوى جديدة
-                </a>
-                {% endif %}
-            </div>
-            <div class="card-body">
-                {% if recent_complaints %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>العنوان</th>
-                                <th>التصنيف</th>
-                                <th>الحالة</th>
-                                <th>التاريخ</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for complaint in recent_complaints %}
-                            <tr>
-                                <td>{{ complaint.title }}</td>
-                                <td>{{ complaint.category }}</td>
-                                <td>
-                                    <span class="badge bg-{{ {
-                                        'pending': 'warning',
-                                        'in_progress': 'info',
-                                        'resolved': 'success',
-                                        'rejected': 'danger'
-                                    }[complaint.status] }}">
-                                        {{ {
-                                            'pending': 'قيد الانتظار',
-                                            'in_progress': 'قيد المعالجة',
-                                            'resolved': 'تم الحل',
-                                            'rejected': 'مرفوضة'
-                                        }[complaint.status] }}
-                                    </span>
-                                </td>
-                                <td>{{ complaint.created_at.strftime('%Y-%m-%d') }}</td>
-                                <td>
-                                    <a href="{{ url_for('complaints.view', id=complaint.id) }}" class="btn btn-sm btn-info">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+    <!-- بطاقات الإحصائيات -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card primary h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h6 class="text-muted small fw-bold">إجمالي الشكاوى</h6>
+                    <h2 class="number mb-0">{{ total_complaints }}</h2>
                 </div>
-                {% else %}
-                <p class="text-center text-muted my-4">لا توجد شكاوى حديثة</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card warning h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h6 class="text-muted small fw-bold">قيد الانتظار</h6>
+                    <h2 class="number mb-0">{{ pending_complaints }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card info h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                    <h6 class="text-muted small fw-bold">قيد المعالجة</h6>
+                    <h2 class="number mb-0">{{ in_progress_complaints }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card success h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon-wrapper">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h6 class="text-muted small fw-bold">تم حلها</h6>
+                    <h2 class="number mb-0">{{ resolved_complaints }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm border-0 overflow-hidden">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-list-ul me-2 text-primary"></i>
+                        آخر الشكاوى المستلمة
+                    </h5>
+                    {% if current_user.role == 'sales' %}
+                    <a href="{{ url_for('complaints.create') }}" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-plus me-1"></i> شكوى جديدة
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_complaints %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">عنوان الشكوى</th>
+                                    <th>التصنيف</th>
+                                    <th>الحالة</th>
+                                    <th>التاريخ</th>
+                                    <th class="text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for complaint in recent_complaints %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">{{ complaint.title }}</td>
+                                    <td>
+                                        <span class="text-muted small">{{ complaint.category }}</span>
+                                    </td>
+                                    <td>
+                                        {% set status_class = {
+                                            'pending': 'warning',
+                                            'in_progress': 'info',
+                                            'resolved': 'success',
+                                            'rejected': 'danger'
+                                        }[complaint.status] %}
+                                        <span class="badge bg-{{ status_class }} rounded-pill">
+                                            <i class="fas fa-circle small me-1"></i>
+                                            {{ {
+                                                'pending': 'قيد الانتظار',
+                                                'in_progress': 'قيد المعالجة',
+                                                'resolved': 'تم الحل',
+                                                'rejected': 'مرفوضة'
+                                            }[complaint.status] }}
+                                        </span>
+                                    </td>
+                                    <td>{{ complaint.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('complaints.view', id=complaint.id) }}" class="btn btn-sm btn-light rounded-circle shadow-sm" title="عرض التفاصيل">
+                                            <i class="fas fa-eye text-primary"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <img src="https://cdn-icons-png.flaticon.com/512/4076/4076402.png" width="100" class="opacity-25 mb-3">
+                        <p class="text-muted">لا توجد شكاوى حديثة حتى الآن</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if recent_complaints %}
+                <div class="card-footer bg-white border-0 text-center py-3">
+                    <a href="{{ url_for('complaints.index') }}" class="btn btn-link text-decoration-none fw-bold">
+                        عرض جميع الشكاوى <i class="fas fa-arrow-left ms-1"></i>
+                    </a>
+                </div>
                 {% endif %}
             </div>
         </div>
